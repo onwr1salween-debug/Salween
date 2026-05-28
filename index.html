@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>รายงานสรุปลุ่มน้ำสาละวิน – สทนช.</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+<script src="data.js"></script>
+
+<style>
+/* ── MINIMALIST LIGHT THEME ── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Sarabun', sans-serif; background: #f8fafc; color: #334155; min-height: 100vh; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+/* ── HEADER ── */
+.hdr { background: #ffffff; border-bottom: 1px solid #e2e8f0; padding: 16px 24px 0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.hdr-top { display: flex; align-items: center; gap: 16px; }
+.logo { width: 48px; height: 48px; background: #e0f2fe; border: 2px solid #bae6fd; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+.org { font-size: 11px; color: #64748b; letter-spacing: 1px; font-weight: 600; }
+h1 { font-size: 18px; font-weight: 700; color: #0f172a; line-height: 1.4; }
+h1 span { color: #0284c7; }
+.hdr-right { margin-left: auto; display: flex; gap: 12px; align-items: center; }
+.date-lbl small { font-size: 11px; color: #64748b; display: block; text-align: right; }
+.date-lbl strong { font-size: 14px; color: #0284c7; }
+
+/* ── TABS ── */
+.tabs { display: flex; gap: 4px; margin-top: 12px; overflow-x: auto; }
+.tab { background: transparent; border: none; color: #64748b; padding: 10px 18px; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 600; border-bottom: 3px solid transparent; transition: all 0.2s; white-space: nowrap; }
+.tab.active { color: #0284c7; border-bottom-color: #0284c7; }
+.tab:hover:not(.active) { color: #334155; background: #f1f5f9; border-radius: 6px 6px 0 0; }
+
+/* ── LAYOUT & PANELS ── */
+.page { max-width: 1200px; margin: 0 auto; padding: 24px; }
+.hidden { display: none !important; }
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+.panel { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
+.ptitle { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+.psub { font-size: 12px; color: #64748b; margin-bottom: 16px; }
+
+/* ── KPIs (INFOGRAPHIC STYLE) ── */
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.kpi { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; position: relative; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
+.kpi-lbl { font-size: 12px; color: #64748b; font-weight: 600; margin-bottom: 8px; }
+.kpi-val { font-size: 28px; font-weight: 800; }
+.kpi-sub { font-size: 11px; color: #94a3b8; margin-top: 6px; }
+.kpi-icon { position: absolute; right: 16px; top: 16px; font-size: 28px; opacity: 0.8; }
+
+/* ── BUTTONS & INPUTS ── */
+.btn { background: #ffffff; border: 1px solid #cbd5e1; color: #475569; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+.btn.on { background: #f0f9ff; border-color: #38bdf8; color: #0284c7; }
+.btn:hover:not(.on) { background: #f8fafc; border-color: #94a3b8; }
+.btn-pdf { background: #f8fafc; border: 1px solid #cbd5e1; color: #334155; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.btn-pdf:hover { background: #f1f5f9; }
+.btn-dl { background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; }
+.btn-dl:hover { background: #dcfce7; }
+.fbar { display: flex; gap: 10px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
+.si { background: #ffffff; border: 1px solid #cbd5e1; color: #334155; border-radius: 8px; padding: 8px 14px; font-family: inherit; font-size: 13px; outline: none; }
+.si:focus { border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56,189,248,0.1); }
+
+/* ── TABLES ── */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { padding: 10px 12px; text-align: left; color: #475569; font-weight: 700; border-bottom: 2px solid #e2e8f0; background: #f8fafc; position: sticky; top: 0; z-index: 5; }
+td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
+tr:hover td { background: #f8fafc; }
+tfoot td { border-top: 2px solid #cbd5e1; font-weight: 700; color: #0f172a; background: #f8fafc; }
+.badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.bf { background: #e0f2fe; color: #0284c7; }
+.bd { background: #ffedd5; color: #c2410c; }
+.bs { background: #ffe4e6; color: #be123c; }
+
+/* ── MAP & LEGEND ── */
+#map-main { height: 450px; border-radius: 12px; border: 1px solid #e2e8f0; }
+#map-tak, #map-ms { height: 350px; border-radius: 12px; border: 1px solid #e2e8f0; }
+.legend { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; font-size: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+.lr { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; } .lr:last-child { margin: 0; }
+.ldot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.prog-bg { background: #e2e8f0; border-radius: 4px; height: 8px; overflow: hidden; margin: 4px 0; }
+.prog { height: 100%; border-radius: 4px; }
+
+/* ── PRINT MEDIA QUERY (ONE PAGE SUMMARY) ── */
+@media print {
+  @page { size: A4 portrait; margin: 10mm; }
+  body { background: white !important; font-size: 11px; }
+  .hdr { border: none; padding: 0; position: static; box-shadow: none; margin-bottom: 15px; }
+  .hdr .tabs, .hdr-right button, .fbar, .btn-dl { display: none !important; }
+  .page { padding: 0; margin: 0; max-width: 100%; }
+  .panel { box-shadow: none; border: 1px solid #cbd5e1; margin-bottom: 15px; padding: 12px; break-inside: avoid; }
+  .kpis { gap: 10px; margin-bottom: 15px; }
+  .kpi { padding: 12px; border-color: #cbd5e1; }
+  .kpi-icon { right: 10px; top: 10px; font-size: 20px; }
+  .g2 { gap: 15px; }
+  /* ซ่อนแท็บอื่นๆ ที่ไม่ได้ใช้งานในตอนพิมพ์ */
+  #tab-map, #tab-village, #tab-district, #tab-trend, #tab-samsak { display: none !important; }
+  #tab-overview { display: block !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <div class="logo">💧</div>
+    <div>
+      <div class="org">สทนช.1 · กลุ่มประสานงานลุ่มน้ำสาละวิน</div>
+      <h1>สรุปสถานการณ์น้ำท่วม-แล้ง <span>แบบหน้าเดียว (One Page)</span></h1>
+    </div>
+    <div class="hdr-right">
+      <button class="btn-pdf" onclick="window.print()">🖨️ บันทึกเป็น PDF / พิมพ์</button>
+      <div class="date-lbl"><small>ข้อมูลอัปเดต ณ วันที่</small><strong>26 พ.ค. 2568</strong></div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="goTab('overview')">📊 สรุปผู้บริหาร (One Page)</button>
+    <button class="tab" onclick="goTab('map')">🗺️ แผนที่ความเสี่ยง</button>
+    <button class="tab" onclick="goTab('village')">🏘️ ข้อมูลระดับหมู่บ้าน</button>
+    <button class="tab" onclick="goTab('district')">📋 สรุปรายอำเภอ</button>
+    <button class="tab" onclick="goTab('trend')">📈 แนวโน้มอดีต</button>
+  </div>
+</div>
+
+<div class="page">
+<div id="tab-overview">
+  <div class="kpis">
+    <div class="kpi" style="border-top: 4px solid #38bdf8">
+      <div class="kpi-icon">🌊</div>
+      <div class="kpi-lbl">พื้นที่อุทกภัย (หมู่บ้าน)</div>
+      <div class="kpi-val" style="color: #0284c7">701</div>
+      <div class="kpi-sub">ตาก 277 · แม่ฮ่องสอน 424</div>
+    </div>
+    <div class="kpi" style="border-top: 4px solid #fb923c">
+      <div class="kpi-icon">🌵</div>
+      <div class="kpi-lbl">พื้นที่ภัยแล้ง (หมู่บ้าน)</div>
+      <div class="kpi-val" style="color: #c2410c">799</div>
+      <div class="kpi-sub">ตาก 277 · แม่ฮ่องสอน 522</div>
+    </div>
+    <div class="kpi" style="border-top: 4px solid #f43f5e">
+      <div class="kpi-icon">⚠️</div>
+      <div class="kpi-lbl">ท่วมซ้ำซาก ≥4 ปี</div>
+      <div class="kpi-val" style="color: #be123c">250</div>
+      <div class="kpi-sub">ตาก 124 · แม่ฮ่องสอน 126</div>
+    </div>
+    <div class="kpi" style="border-top: 4px solid #a78bfa">
+      <div class="kpi-icon">🚨</div>
+      <div class="kpi-lbl">ประสบเหตุปี 2568</div>
+      <div class="kpi-val" style="color: #6d28d9">269</div>
+      <div class="kpi-sub">เฝ้าระวัง จ.แม่ฮ่องสอน</div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="panel">
+      <div class="ptitle">สถิติอุทกภัยและซ้ำซาก – จ.ตาก</div>
+      <div class="psub">เปรียบเทียบหมู่บ้านทั้งหมด และพื้นที่ท่วมซ้ำซาก 4 ปี</div>
+      <canvas id="c-ft" height="200"></canvas>
+    </div>
+    <div class="panel">
+      <div class="ptitle">สถิติอุทกภัยและซ้ำซาก – จ.แม่ฮ่องสอน</div>
+      <div class="psub">รวมสถิติปี 2568 และพื้นที่ท่วมซ้ำซาก ≥4 ปี</div>
+      <canvas id="c-ms" height="200"></canvas>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="panel">
+      <div class="ptitle">ความเสี่ยงภัยแล้ง – จ.ตาก</div>
+      <div class="psub">หมู่บ้านเสี่ยงแล้งและพื้นที่ซ้ำซาก</div>
+      <canvas id="c-dt" height="180"></canvas>
+    </div>
+    <div class="panel">
+      <div class="ptitle">ความเสี่ยงภัยแล้ง – จ.แม่ฮ่องสอน</div>
+      <div class="psub">หมู่บ้านเสี่ยงแล้งและพื้นที่ซ้ำซาก</div>
+      <canvas id="c-dm" height="180"></canvas>
+    </div>
+  </div>
+</div>
+
+<div id="tab-map" class="hidden"><div class="panel"><em>โหลดแผนที่...</em></div></div>
+<div id="tab-village" class="hidden"><div class="panel"><em>โหลดตาราง...</em></div></div>
+<div id="tab-district" class="hidden"><div class="panel"><em>โหลดสรุป...</em></div></div>
+<div id="tab-trend" class="hidden"><div class="panel"><em>โหลดแนวโน้ม...</em></div></div>
+</div>
+
+<script>
+// กำหนดสีธีมสว่างสำหรับกราฟ
+const C = {
+  flood: '#38bdf8', samsak: '#f43f5e', drought: '#fb923c', ok: '#4ade80',
+  muted: '#64748b', grid: '#e2e8f0', purple: '#a78bfa'
+};
+
+const TAB_IDS = ['overview','map','village','district','trend'];
+
+function goTab(name){
+  TAB_IDS.forEach(t => {
+    const el = document.getElementById('tab-'+t);
+    if(el) el.classList.toggle('hidden', t !== name);
+  });
+  document.querySelectorAll('.tab').forEach((b,i) => {
+    if(TAB_IDS[i]) b.classList.toggle('active', TAB_IDS[i] === name);
+  });
+}
+
+// ── CHART HELPER ──
+Chart.defaults.color = '#475569';
+Chart.defaults.font.family = 'Sarabun';
+
+function mkBar(id, labels, datasets, horiz){
+  const ctx = document.getElementById(id);
+  if(!ctx) return;
+  return new Chart(ctx.getContext('2d'), {
+    type: 'bar', data: { labels, datasets },
+    options: {
+      responsive: true, indexAxis: horiz ? 'y' : 'x',
+      plugins: { legend: { labels: { color: '#334155', font: { size: 12 }, boxWidth: 12 } } },
+      scales: {
+        x: { ticks: { color: '#64748b' }, grid: { color: C.grid } },
+        y: { ticks: { color: '#64748b' }, grid: { color: C.grid } }
+      }
+    }
+  });
+}
+
+// ── OVERVIEW CHARTS INIT ──
+window.addEventListener('load', () => {
+  // กราฟเหล่านี้ดึงตัวแปรจากไฟล์ data.js มาวาด
+  if(typeof FLOOD_TAK !== 'undefined'){
+    mkBar('c-ft', FLOOD_TAK.map(r=>r.amp), [
+      {label: 'หมู่บ้านทั้งหมด', data: FLOOD_TAK.map(r=>r.flood), backgroundColor: C.flood, borderRadius: 4},
+      {label: 'ซ้ำซาก 4 ปี', data: FLOOD_TAK.map(r=>r.samsak4), backgroundColor: C.samsak, borderRadius: 4}
+    ], true);
+    mkBar('c-ms', FLOOD_MS.map(r=>r.amp), [
+      {label: 'หมู่บ้านทั้งหมด', data: FLOOD_MS.map(r=>r.flood), backgroundColor: '#bae6fd', borderRadius: 4},
+      {label: 'ท่วมปี 68', data: FLOOD_MS.map(r=>r.flood2568), backgroundColor: C.flood, borderRadius: 4},
+      {label: 'ซ้ำซาก ≥4 ปี', data: FLOOD_MS.map(r=>r.samsak4), backgroundColor: C.samsak, borderRadius: 4}
+    ], true);
+    mkBar('c-dt', DROUGHT_TAK.map(r=>r.amp), [
+      {label: 'หมู่บ้านเสี่ยงแล้ง', data: DROUGHT_TAK.map(r=>r.drought), backgroundColor: C.drought, borderRadius: 4},
+      {label: 'ซ้ำซาก ≥3 ปี', data: DROUGHT_TAK.map(r=>r.samsak3), backgroundColor: C.samsak, borderRadius: 4}
+    ], true);
+    mkBar('c-dm', DROUGHT_MS.map(r=>r.amp), [
+      {label: 'หมู่บ้านเสี่ยงแล้ง', data: DROUGHT_MS.map(r=>r.drought), backgroundColor: C.drought, borderRadius: 4},
+      {label: 'มีประวัติซ้ำซาก', data: DROUGHT_MS.map(r=>r.samsak_any), backgroundColor: C.samsak, borderRadius: 4}
+    ], true);
+  }
+});
+</script>
+</body>
+</html>
